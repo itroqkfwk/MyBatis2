@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.config.StudentMapper">
+
+     <select id="totalRecord" resultType="int">
+        select count(*)
+        from tb_student
+     </select>
+
+     <select id="selectByGrade"
+      parameterType="string" resultType="hashmap">
+      <![CDATA[
+        select term_no, student_no, student_name, class_name, point ,
+        CASE WHEN  point < 2.0  THEN 'F학점'
+             WHEN  point < 3.0  THEN 'D학점'
+             WHEN  point < 3.5  THEN 'C학점'
+             WHEN  point < 4.0  THEN 'B학점'
+             ELSE  'A학점'
+	    END as grade
+		from tb_student JOIN tb_grade USING(student_no)
+		                JOIN tb_class USING(class_no)
+		where student_no = #{searchNo}
+		order by term_no asc
+          ]]>
+     </select>
+
+
+	 <update id="updateCapacityChange">
+	    <![CDATA[
+	 	  update tb_department
+	 	  set capacity =  CASE WHEN  capacity <= 20 THEN capacity+5
+	 	                       WHEN  capacity <= 25 THEN capacity+4
+	 	                       WHEN  capacity <= 30 THEN capacity+3
+	 	                       ELSE  capacity
+	 	                  END
+	 	                  
+	 	 ]]>
+	 </update>
+
+	 <update id="updateAbsenceChange" parameterType="arraylist">
+	 	 update tb_student
+	 	 set absence_yn = 'Y'
+	 	 <where>
+              student_no IN 
+                     <foreach item="item" 
+                              collection="list"  separator="," open="(" close=")">
+                         #{item} 
+                     </foreach>
+         </where>  
+	 </update>
+
+     <select id="selectBySearchNo" resultType="StudentDTO"
+         parameterType="arraylist">
+           select student_no as stuNo,
+                  department_no as departNo,
+                  student_name as stuName,
+                  rpad(substr(student_ssn, 1, 8), 14,'*') as stuSsn,
+                  CASE WHEN student_address IS NULL THEN '***주소 미상***'
+                       ELSE concat(substr(student_address, 1, 10),'...')
+                  END as stuAddress,
+                  date_format(entrance_date, '%Y/%m/%d' ) as entDate,
+                  absence_yn as absYn,
+                  coach_professor_no as coachProfessorNo
+           from tb_student
+           <where>
+              student_no IN 
+                     <foreach item="item" collection="list"  separator="," open="(" close=")">
+                         #{item} 
+                     </foreach>
+           </where>  
+      </select>
+     <select id="selectByEntranceDate" resultType="StudentDTO" parameterType="hashmap">
+           select student_no as stuNo,
+                  department_no as departNo,
+                  student_name as stuName,
+                  rpad(substr(student_ssn, 1, 8), 14,'*') as stuSsn,
+                  CASE WHEN student_address IS NULL THEN '***주소 미상***'
+                       ELSE concat(substr(student_address, 1, 10),'...')
+                  END as stuAddress,
+                  date_format(entrance_date, '%Y/%m/%d' ) as entDate,
+                  absence_yn as absYn,
+                  coach_professor_no as coachProfessorNo
+           from tb_student
+           where  date_format(entrance_date, '%Y' ) BETWEEN  #{startDate}  AND #{endDate}
+           order by entrance_date desc
+      </select>
+      
+ 
+       <select id="selectByName" resultType="StudentDTO" parameterType="string">
+           select student_no as stuNo,
+                  department_no as departNo,
+                  student_name as stuName,
+                  rpad(substr(student_ssn, 1, 8), 14,'*') as stuSsn,
+                  CASE WHEN student_address IS NULL THEN '***주소 미상***'
+                       ELSE concat(substr(student_address, 1, 10),'...')
+                  END as stuAddress,
+                  date_format(entrance_date, '%Y/%m/%d' ) as entDate,
+                  absence_yn as absYn,
+                  coach_professor_no as coachProfessorNo
+           from tb_student
+           where student_name  LIKE  concat('%', #{searchName} , '%')
+           order by student_no asc
+      </select>
+      
+      <select id="selectAllStudent" resultType="StudentDTO">
+           select student_no as stuNo,
+                  department_no as departNo,
+                  student_name as stuName,
+                  rpad(substr(student_ssn, 1, 8), 14,'*') as stuSsn,
+                  concat(substr(student_address, 1, 10),'...') as stuAddress,
+                  date_format(entrance_date, '%Y/%m/%d' ) as entDate,
+                  absence_yn as absYn,
+                  coach_professor_no as coachProfessorNo
+           from tb_student
+           order by student_no asc
+      </select>
+	 
+</mapper>
